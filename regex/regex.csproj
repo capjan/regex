@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Authors>Jan Ruhlaender</Authors>
+        <Version>1.0.0</Version>
+        <Copyright>© Jan Ruhlaender. All rights reserved.</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Description>Regex command for the commandline.</Description>
+        <PackageId>cap.regex</PackageId>
+        <OutputType>Exe</OutputType>
+        <TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackAsTool>true</PackAsTool>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Cap.Core" Version="6.4.0" />
+    </ItemGroup>
+
+</Project>
