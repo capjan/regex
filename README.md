@@ -1,3 +1,5 @@
+[![.NET 5.0](https://github.com/capjan/regex/actions/workflows/dotnet.yml/badge.svg)](https://github.com/capjan/regex/actions/workflows/dotnet.yml)
+
 # regex
 
 ... because it makes developers life easier 😎
