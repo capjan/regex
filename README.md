@@ -1,5 +1,7 @@
 # regex
 
+... because it makes my developer life easier 😎
+
 ## Features
 
 - .NET Regular Expressions for CLI on Linux, macOS and Windows
