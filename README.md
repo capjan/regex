@@ -1,6 +1,6 @@
 # regex
 
-... because it makes my developer life easier 😎
+... because it makes developers life easier 😎
 
 ## Features
 
