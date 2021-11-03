@@ -6,6 +6,7 @@
 
 - .NET Regular Expressions for CLI on Linux, macOS and Windows
 - [.NET Tool](https://docs.microsoft.com/en-us/dotnet/core/tools/global-tools) Deployment
+- Permissive [MIT License](./LICENSE)
 
 ## Install
 
