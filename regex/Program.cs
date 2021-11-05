@@ -65,7 +65,8 @@ namespace regex
                         options.Replace,
                         options.Verbose,
                         options.OffsetColumnWidth,
-                        options.OnlyMatching);
+                        options.OnlyMatching,
+                        options.MaxMatchesCount);
                 }
             }
             catch (Exception e)
@@ -81,8 +82,6 @@ namespace regex
 
         #region Hilfsfunktionen
 
-
-
         /// <summary>
         /// Verarbeitet eine Datei mit den geg. Parametern
         /// </summary>
@@ -92,13 +91,16 @@ namespace regex
         /// <param name="replace">Ersetzungsmuster als regulärer Ausdruck (Optional) Null wenn nicht ersetzt werden soll</param>
         /// <param name="verbose">Sollen zusätzliche Informationen angezeigt werden?</param>
         /// <param name="offsetColumnWidth">Zeichen Anzahl für die Offset Spalte in der Ausgabe</param>
+        /// <param name="onlyMatching">if set regex only prints the match to stdout</param>
+        /// <param name="maxCount">limits the matches to the given count</param>
         private static void ProcessInputFile(string filePath,
                                              string pattern,
                                              RegexOptions regexOptions,
                                              string replace,
                                              bool verbose,
                                              int offsetColumnWidth,
-                                             bool onlyMatching)
+                                             bool onlyMatching,
+                                             int maxCount)
         {
 
             if (!File.Exists(filePath))
@@ -120,17 +122,20 @@ namespace regex
                 // search mode
                 MatchCollection mc = Regex.Matches(fileContent, pattern, regexOptions);
 
+                var countOfPrintedMatches = 0;
                 foreach (Match m in mc)
                 {
                     if (!onlyMatching)
                         Console.Write(@"Offset:" + m.Index.ToString(CultureInfo.InvariantCulture).PadRight(offsetColumnWidth) + @" ");
                     PrintMatch(fileContent, m, onlyMatching);
                     Console.WriteLine();
+                    countOfPrintedMatches++;
+                    if (countOfPrintedMatches == maxCount) break;
                 }
 
-                if (verbose || mc.Count > 0)
+                if (!onlyMatching && (verbose || countOfPrintedMatches > 0))
                 {
-                    PrintMatchResult(filePath, mc.Count);
+                    PrintMatchResult(filePath, countOfPrintedMatches);
                 }
 
             }

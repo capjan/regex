@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
 using Core.Parser.Arguments;
+using Core.Parser.Basic;
 
 namespace regex
 {
@@ -20,7 +22,8 @@ namespace regex
                 { "f|filter=", "wildcard based file filter (default *.*)\ne.g. *.txt", v => Filter = v},
                 { "r|recursive", "progress all subdirectories", v => Recursive = (v != null)},
                 { "offset-width=", "output-formatting:\nset the count of characters used for the offset column (default 6)", v => OffsetColumnWidth = int.Parse(v)},
-                { "o|only-matching", "Prints only the match", v => OnlyMatching = v != null },
+                { "o|only-matching", "prints only the match", v => OnlyMatching = v != null },
+                { "m|max-count=", "limit matches to the given count", v => MaxMatchesCount = new IntegerParser().ParseOrFallback(v, int.MaxValue)},
                 { "v|verbose" , "show additional information", v => Verbose = (v != null)},
                 { "V|version" , "show version information", v => ShowVersion = (v != null)},
                 { "h|help", "shows this help", v => ShowHelp = (v != null) }
@@ -36,6 +39,7 @@ namespace regex
         public bool ShowHelp { get; private set; }
         public bool Verbose { get; private set; }
         public bool CaseSensitive { get; private set; }
+        public int MaxMatchesCount { get; private set; }
         public bool Recursive { get; private set; }
 
         public bool OnlyMatching { get; private set; }
