@@ -22,4 +22,4 @@ jobs:
     - name: Build and Test
       run: dotnet build -c Release
     - name: NuGet publishing
-    run: dotnet nuget push $GITHUB_WORKSPACE\regex\bin\Release\*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push $GITHUB_WORKSPACE\regex\bin\Release\*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
