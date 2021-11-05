@@ -11,6 +11,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHub Actions", "GitHub Actions", "{F7B3BD36-A655-402D-83E5-2A9A9EA6CEFB}"
 ProjectSection(SolutionItems) = preProject
 	.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+	.github\workflows\nuget.yml = .github\workflows\nuget.yml
 EndProjectSection
 EndProject
 Global
