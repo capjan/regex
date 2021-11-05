@@ -31,14 +31,16 @@ Arguments:
 
 Options:
   -R, --replace=VALUE        replacement Pattern (regex)
-  -c, --case-sensitive       enables case-sensitive behavior - btw. disables
+  -c, --case-sensitive       enables case-sensitive behavior - btw. disables 
                                the by default enabled ignore-case option
   -f, --filter=VALUE         wildcard based file filter (default *.*)
                                e.g. *.txt
   -r, --recursive            progress all subdirectories
       --offset-width=VALUE   output-formatting:
-                               set the count of characters used for the offset
+                               set the count of characters used for the offset 
                                column (default 6)
+  -o, --only-matching        prints only the match
+  -m, --max-count=VALUE      limit matches to the given count
   -v, --verbose              show additional information
   -V, --version              show version information
   -h, --help                 shows this help
