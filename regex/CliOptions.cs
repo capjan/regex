@@ -20,6 +20,7 @@ namespace regex
                 { "f|filter=", "wildcard based file filter (default *.*)\ne.g. *.txt", v => Filter = v},
                 { "r|recursive", "progress all subdirectories", v => Recursive = (v != null)},
                 { "offset-width=", "output-formatting:\nset the count of characters used for the offset column (default 6)", v => OffsetColumnWidth = int.Parse(v)},
+                { "o|only-matching", "Prints only the match", v => OnlyMatching = v != null },
                 { "v|verbose" , "show additional information", v => Verbose = (v != null)},
                 { "V|version" , "show version information", v => ShowVersion = (v != null)},
                 { "h|help", "shows this help", v => ShowHelp = (v != null) }
@@ -36,6 +37,8 @@ namespace regex
         public bool Verbose { get; private set; }
         public bool CaseSensitive { get; private set; }
         public bool Recursive { get; private set; }
+
+        public bool OnlyMatching { get; private set; }
         public string Filter { get; private set; } = "*.*";
         public bool ShowVersion { get; private set; }
         public RegexOptions RegExOptions { get; private set; }

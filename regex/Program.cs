@@ -64,7 +64,8 @@ namespace regex
                         options.RegExOptions,
                         options.Replace,
                         options.Verbose,
-                        options.OffsetColumnWidth);
+                        options.OffsetColumnWidth,
+                        options.OnlyMatching);
                 }
             }
             catch (Exception e)
@@ -96,7 +97,8 @@ namespace regex
                                              RegexOptions regexOptions,
                                              string replace,
                                              bool verbose,
-                                             int offsetColumnWidth)
+                                             int offsetColumnWidth,
+                                             bool onlyMatching)
         {
 
             if (!File.Exists(filePath))
@@ -120,8 +122,9 @@ namespace regex
 
                 foreach (Match m in mc)
                 {
-                    Console.Write(@"Offset:" + m.Index.ToString(CultureInfo.InvariantCulture).PadRight(offsetColumnWidth) + @" ");
-                    PrintMatch(fileContent, m);
+                    if (!onlyMatching)
+                        Console.Write(@"Offset:" + m.Index.ToString(CultureInfo.InvariantCulture).PadRight(offsetColumnWidth) + @" ");
+                    PrintMatch(fileContent, m, onlyMatching);
                     Console.WriteLine();
                 }
 
@@ -157,7 +160,7 @@ namespace regex
             }
         }
 
-        private static void PrintMatch(string fileContent, Match m)
+        private static void PrintMatch(string fileContent, Match m, bool onlyMatches)
         {
             string preString = null;
             string postString = null;
@@ -170,7 +173,7 @@ namespace regex
             var indexOfPreString = GetStartIndexOfPreString(m, fileContent);
 
             // PreString nach stdout schreiben
-            if ((indexOfPreString != -1) && indexOfPreString < startIndexOfMatch)
+            if (!onlyMatches && indexOfPreString != -1 && indexOfPreString < startIndexOfMatch)
             {
                 preString = fileContent.Substring(indexOfPreString, (m.Index - indexOfPreString));
                 Console.Write(preString);
@@ -180,9 +183,9 @@ namespace regex
             Console.Write(m.Value);
             Console.ResetColor();
 
-            // Wenn es keinen Poststring gibt Abbrechen,
+            // Wenn es keinen Poststring gibt abbrechen,
             // Ansonsten den Poststring nach stdout schreiben.
-            if (indexOfNextNewLine <= firstIndexAfterMatch) return;
+            if (onlyMatches || indexOfNextNewLine <= firstIndexAfterMatch) return;
             postString = fileContent.Substring(firstIndexAfterMatch, (indexOfNextNewLine - firstIndexAfterMatch));
             Console.Write(postString);
         }
