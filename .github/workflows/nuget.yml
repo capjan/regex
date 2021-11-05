@@ -2,15 +2,22 @@ name: NuGet Publish
 
 on:
   workflow_dispatch:
+    branches: [ main ]
     inputs:
       name:
         description: enter your name
         required: true
 
-
 jobs:
   say_hello:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "Hello ${{ github.event.inputs.name }}!"
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: Build and Test
+      run: dotnet build -c Release
