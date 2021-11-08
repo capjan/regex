@@ -3,13 +3,9 @@ name: NuGet Publish
 on:
   workflow_dispatch:
     branches: [ main ]
-    inputs:
-      name:
-        description: enter your name
-        required: true
 
 jobs:
-  say_hello:
+  nuget_push:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
