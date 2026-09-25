@@ -4,7 +4,7 @@
 
 Search and replace with **.NET regular expressions** from the command line, using the same engine as your C# code.
 
-<img src="assets/hero-regex.png" alt="grep, sed and PCRE each speak a different regex dialect; regex runs the .NET flavor on the command line and the same pattern works unchanged in C#">
+<img src="assets/hero-regex.png" alt="regex CLI and C# share the .NET regular expression engine: same pattern, same engine">
 
 ## Why not grep or ripgrep?
 
