@@ -25,6 +25,9 @@ static class Program
             if (options.Pattern == null)
                 throw new ArgumentException("Missing regular expression pattern");
 
+            if ((options.DryRun || options.Diff) && options.Replace == null)
+                throw new ArgumentException("--dry-run and --diff require --replace");
+
             var filelist = new List<string>();
 
             foreach (var itm in options.Paths)
@@ -134,15 +137,21 @@ static class Program
                     return result;
                 }, options.RegExOptions);
 
+            var writeChanges = !options.DryRun && !options.Diff;
+
             // Dateien ohne Treffer nicht neu schreiben (Encoding und Zeitstempel bleiben erhalten).
             if (matchCount > 0)
             {
-                File.WriteAllText(filePath, replaced);
+                if (options.Diff)
+                    PrintDiff(UnifiedDiff.Create(filePath, fileContent, replaced));
+                if (writeChanges)
+                    File.WriteAllText(filePath, replaced);
             }
 
-            if (options.Verbose || matchCount > 0)
+            // Bei --diff besteht die Ausgabe nur aus dem Diff, damit sie sich an patch weiterreichen lässt.
+            if (!options.Diff && (options.Verbose || matchCount > 0))
             {
-                PrintReplacementResult(filePath, matchCount);
+                PrintReplacementResult(filePath, matchCount, options.DryRun);
             }
         }
     }
@@ -180,15 +189,36 @@ static class Program
         }
     }
 
-    private static void PrintReplacementResult(string filePath, int replacementCount)
+    private static void PrintReplacementResult(string filePath, int replacementCount, bool dryRun)
     {
+        var verb = dryRun ? "would do" : "did";
         if (replacementCount == 1)
         {
-            Console.WriteLine(@"{0}: did 1 replacement", filePath);
+            Console.WriteLine(@"{0}: {1} 1 replacement", filePath, verb);
         }
         else
         {
-            Console.WriteLine(@"{0}: did {1:n0} replacements", filePath, replacementCount);
+            Console.WriteLine(@"{0}: {1} {2:n0} replacements", filePath, verb, replacementCount);
+        }
+    }
+
+    private static void PrintDiff(string diff)
+    {
+        // Farben nur im Terminal, damit umgeleitete Ausgabe ein gültiger Patch bleibt.
+        var useColor = !Console.IsOutputRedirected;
+        foreach (var line in diff[..^1].Split('\n'))
+        {
+            if (useColor)
+            {
+                if (line.StartsWith("+++") || line.StartsWith("---")) Console.ForegroundColor = ConsoleColor.White;
+                else if (line.StartsWith('+')) Console.ForegroundColor = ConsoleColor.Green;
+                else if (line.StartsWith('-')) Console.ForegroundColor = ConsoleColor.Red;
+                else if (line.StartsWith("@@")) Console.ForegroundColor = ConsoleColor.Cyan;
+            }
+
+            Console.Write(line);
+            if (useColor) Console.ResetColor();
+            Console.Write('\n');
         }
     }
     #endregion

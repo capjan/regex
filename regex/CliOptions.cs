@@ -10,6 +10,8 @@ internal sealed class CliOptions
     public string? Pattern { get; init; }
     public string[] Paths { get; init; } = [];
     public string? Replace { get; init; }
+    public bool DryRun { get; init; }
+    public bool Diff { get; init; }
     public bool CaseSensitive { get; init; }
     public string Filter { get; init; } = "*.*";
     public bool Recursive { get; init; }
