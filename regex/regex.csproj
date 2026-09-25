@@ -3,7 +3,7 @@
     <PropertyGroup>
         <Authors>Jan Ruhlaender</Authors>
         <Company>Jan Ruhlaender</Company>
-        <Version>2.0.1</Version>
+        <Version>2.1.0</Version>
         <Copyright>© Jan Ruhlaender. All rights reserved.</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Description>Regex command for the commandline.</Description>
