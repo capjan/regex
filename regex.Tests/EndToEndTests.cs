@@ -164,6 +164,33 @@ public sealed class EndToEndTests : IDisposable
         Assert.Contains("Invalid pattern", stderr);
     }
 
+    [Theory]
+    [InlineData("--max-count")]
+    [InlineData("-m")]
+    [InlineData("--offset-width")]
+    public void NonNumericIntegerOption_FailsWithReadableMessageOnStderr(string option)
+    {
+        var file = WriteFile("a.txt", "x\n");
+
+        var (exitCode, stdout, stderr) = Run(option, "abc", "x", file);
+
+        Assert.Equal(1, exitCode);
+        Assert.Contains("requires a whole number, but got 'abc'", stderr);
+        Assert.DoesNotContain("System.Nullable", stderr);
+        Assert.DoesNotContain("found", stdout);
+    }
+
+    [Fact]
+    public void OffsetWidth_ControlsTheOffsetColumn()
+    {
+        var file = WriteFile("a.txt", "x\n");
+
+        var (exitCode, stdout, _) = Run("--offset-width", "2", "x", file);
+
+        Assert.Equal(0, exitCode);
+        Assert.StartsWith("Offset:0  x", stdout);
+    }
+
     [Fact]
     public void Version_PrintsProgramNameAndVersion()
     {

@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Globalization;
 
 namespace regex;
 
@@ -33,13 +34,11 @@ internal static class CliDefinition
             DefaultValueFactory = _ => "*.*"
         };
         var recursive = new Option<bool>("--recursive", "-r") { Description = "progress all subdirectories" };
-        var offsetWidth = new Option<int>("--offset-width")
-        {
-            Description = "output-formatting: set the count of characters used for the offset column",
-            DefaultValueFactory = _ => 6
-        };
+        var offsetWidth = IntegerOption(
+            "output-formatting: set the count of characters used for the offset column [default: 6]",
+            "--offset-width");
         var onlyMatching = new Option<bool>("--only-matching", "-o") { Description = "prints only the match" };
-        var maxCount = new Option<int?>("--max-count", "-m") { Description = "limit matches to the given count" };
+        var maxCount = IntegerOption("limit matches to the given count", "--max-count", "-m");
         var verbose = new Option<bool>("--verbose", "-v") { Description = "show additional information" };
         var version = new Option<bool>("--version", "-V") { Description = "show version information" };
 
@@ -69,7 +68,7 @@ internal static class CliDefinition
             CaseSensitive = parseResult.GetValue(caseSensitive),
             Filter = parseResult.GetValue(filter) ?? "*.*",
             Recursive = parseResult.GetValue(recursive),
-            OffsetColumnWidth = parseResult.GetValue(offsetWidth),
+            OffsetColumnWidth = parseResult.GetValue(offsetWidth) ?? 6,
             OnlyMatching = parseResult.GetValue(onlyMatching),
             MaxMatchesCount = parseResult.GetValue(maxCount) ?? int.MaxValue,
             Verbose = parseResult.GetValue(verbose),
@@ -77,5 +76,23 @@ internal static class CliDefinition
         }));
 
         return root;
+    }
+
+    /// <summary>
+    /// Option mit ganzzahligem Wert. Bei einem ungültigen Wert gibt es eine lesbare Fehlermeldung.
+    /// </summary>
+    private static Option<int?> IntegerOption(string description, params string[] names)
+    {
+        var option = new Option<int?>(names[0], names[1..]) { Description = description };
+        option.CustomParser = result =>
+        {
+            var value = result.Tokens.Count > 0 ? result.Tokens[0].Value : string.Empty;
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number))
+                return number;
+
+            result.AddError($"Option '{names[0]}' requires a whole number, but got '{value}'.");
+            return null;
+        };
+        return option;
     }
 }
