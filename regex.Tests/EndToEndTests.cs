@@ -173,6 +173,44 @@ public sealed class EndToEndTests : IDisposable
         Assert.Equal(string.Empty, stdout);
     }
 
+    [Fact]
+    public void Replace_Diff_WithUnchangedResult_PrintsNothingAndSucceeds()
+    {
+        var file = WriteFile("a.txt", "foo\n");
+
+        var (exitCode, stdout, stderr) = Run("--diff", "-R", "foo", "foo", file);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal(string.Empty, stdout);
+        Assert.Equal(string.Empty, stderr);
+    }
+
+    [Fact]
+    public void Replace_DiffVerbose_KeepsStdoutAValidPatch()
+    {
+        var file = WriteFile("a.txt", "foo\n");
+
+        var (exitCode, stdout, stderr) = Run("--diff", "-v", "-R", "bar", "foo", file);
+
+        Assert.Equal(0, exitCode);
+        Assert.StartsWith("--- ", stdout);
+        Assert.DoesNotContain("Progressing", stdout);
+        Assert.DoesNotContain("->", stdout);
+        Assert.Contains("Progressing", stderr);
+    }
+
+    [Fact]
+    public void Replace_Diff_PreservesCarriageReturns()
+    {
+        var file = WriteFile("crlf.txt", "a\r\nb\r\n");
+
+        var (_, stdout, _) = Run("--diff", "-R", "x", "a", file);
+
+        Assert.Contains("-a\r\n", stdout);
+        Assert.Contains("+x\r\n", stdout);
+        Assert.Contains(" b\r\n", stdout);
+    }
+
     [Theory]
     [InlineData("--dry-run")]
     [InlineData("--diff")]
