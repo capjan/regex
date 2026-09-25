@@ -1,255 +1,195 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace regex
+namespace regex;
+
+static class Program
 {
-    static class Program
+    static int Main(string[] args)
     {
-        [STAThread]
-        static void Main(string[] args)
-        {
-            var options = new CliOptions(args);
-
-            try
-            {
-
-                if (options.ShowVersion)
-                {
-                    options.PrintVersionInformation();
-                    Environment.Exit(0);
-                }
-
-                if (options.ShowHelp)
-                {
-                    options.WriteHelp(Console.Out);
-                    Environment.Exit(0);
-                }
-
-
-                if (options.Extra.Length == 0)
-                    throw new ArgumentException("Missing regular expression pattern");
-
-
-                var pattern = options.Extra[0];
-
-                var filelist = new List<string>();
-
-                for (var i = 1; i < options.Extra.Length; i++)
-                {
-                    var itm = options.Extra[i];
-
-                    if (itm.EndsWith(new string(Path.DirectorySeparatorChar, 1)) ||
-                        itm.EndsWith(new string(Path.AltDirectorySeparatorChar, 1)))
-                    {
-                        // directory
-                        filelist.AddRange(options.Recursive
-                                              ? Directory.GetFiles(itm.Substring(0, itm.Length - 1), options.Filter, SearchOption.AllDirectories)
-                                              : Directory.GetFiles(itm.Substring(0, itm.Length - 1), options.Filter, SearchOption.TopDirectoryOnly));
-                    }
-                    else
-                    {
-                        filelist.Add(itm);
-                    }
-                }
-
-                // Ausführen
-                foreach (var filePath in filelist)
-                {
-                    ProcessInputFile(
-                        filePath,
-                        pattern,
-                        options.RegExOptions,
-                        options.Replace,
-                        options.Verbose,
-                        options.OffsetColumnWidth,
-                        options.OnlyMatching,
-                        options.MaxMatchesCount);
-                }
-            }
-            catch (Exception e)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine(e.Message);
-                Console.ResetColor();
-                options.WriteMinimalHelp(Console.Out);
-                // options.WriteHelp(Console.Out);
-            }
-
-        }
-
-        #region Hilfsfunktionen
-
-        /// <summary>
-        /// Verarbeitet eine Datei mit den geg. Parametern
-        /// </summary>
-        /// <param name="filePath">Pfad zur Eingabedatei</param>
-        /// <param name="pattern">Suchpattern als regulärer Ausdruck</param>
-        /// <param name="regexOptions">Verwendete Optionen für die Suche mit dem regulären Ausdruck</param>
-        /// <param name="replace">Ersetzungsmuster als regulärer Ausdruck (Optional) Null wenn nicht ersetzt werden soll</param>
-        /// <param name="verbose">Sollen zusätzliche Informationen angezeigt werden?</param>
-        /// <param name="offsetColumnWidth">Zeichen Anzahl für die Offset Spalte in der Ausgabe</param>
-        /// <param name="onlyMatching">if set regex only prints the match to stdout</param>
-        /// <param name="maxCount">limits the matches to the given count</param>
-        private static void ProcessInputFile(string filePath,
-                                             string pattern,
-                                             RegexOptions regexOptions,
-                                             string replace,
-                                             bool verbose,
-                                             int offsetColumnWidth,
-                                             bool onlyMatching,
-                                             int maxCount)
-        {
-
-            if (!File.Exists(filePath))
-            {
-                Console.WriteLine(@"File not found error: " + filePath);
-                return;
-            }
-
-            if (verbose)
-            {
-                Console.WriteLine(@"Progressing: " + filePath);
-            }
-
-            var matchCount = 0;
-            var fileContent = File.ReadAllText(filePath);
-
-            if (replace == null)
-            {
-                // search mode
-                MatchCollection mc = Regex.Matches(fileContent, pattern, regexOptions);
-
-                var countOfPrintedMatches = 0;
-                foreach (Match m in mc)
-                {
-                    if (!onlyMatching)
-                        Console.Write(@"Offset:" + m.Index.ToString(CultureInfo.InvariantCulture).PadRight(offsetColumnWidth) + @" ");
-                    PrintMatch(fileContent, m, onlyMatching);
-                    Console.WriteLine();
-                    countOfPrintedMatches++;
-                    if (countOfPrintedMatches == maxCount) break;
-                }
-
-                if (!onlyMatching && (verbose || countOfPrintedMatches > 0))
-                {
-                    PrintMatchResult(filePath, countOfPrintedMatches);
-                }
-
-            }
-            else
-            {
-                // replace mode
-                fileContent = Regex.Replace(fileContent, pattern,
-                    match =>
-                    {
-                        matchCount++;
-                        var result = match.Result(replace);
-                        if (verbose)
-                        {
-                            Console.WriteLine(@"Offset:" + match.Index.ToString(CultureInfo.InvariantCulture).PadRight(offsetColumnWidth) + @" " + match.Value + @"->" + result);
-                        }
-                        return result;
-                    }, regexOptions
-                    );
-
-                File.WriteAllText(filePath, fileContent);
-
-                if (verbose || matchCount > 0)
-                {
-                    PrintReplacementResult(filePath, matchCount);
-                }
-
-            }
-        }
-
-        private static void PrintMatch(string fileContent, Match m, bool onlyMatches)
-        {
-            string preString = null;
-            string postString = null;
-
-            // Anfang der Zeile suchen. Max. 100 Zeichen
-            var startIndexOfMatch = m.Index;
-            var firstIndexAfterMatch = (m.Index + m.Length);
-
-            var indexOfNextNewLine = GetIndexOfNextNewlineOrEofIndex(fileContent, m);
-            var indexOfPreString = GetStartIndexOfPreString(m, fileContent);
-
-            // PreString nach stdout schreiben
-            if (!onlyMatches && indexOfPreString != -1 && indexOfPreString < startIndexOfMatch)
-            {
-                preString = fileContent.Substring(indexOfPreString, (m.Index - indexOfPreString));
-                Console.Write(preString);
-            }
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.Write(m.Value);
-            Console.ResetColor();
-
-            // Wenn es keinen Poststring gibt abbrechen,
-            // Ansonsten den Poststring nach stdout schreiben.
-            if (onlyMatches || indexOfNextNewLine <= firstIndexAfterMatch) return;
-            postString = fileContent.Substring(firstIndexAfterMatch, (indexOfNextNewLine - firstIndexAfterMatch));
-            Console.Write(postString);
-        }
-
-        private static int GetIndexOfNextNewlineOrEofIndex(string fileContent, Match m)
-        {
-            var firstIndexAfterMatch = (m.Index + m.Length);
-            var indexOfNextNewLine = fileContent.IndexOfAny(new [] { '\n', '\r' }, firstIndexAfterMatch, Math.Min(100, fileContent.Length - firstIndexAfterMatch));
-
-            if (indexOfNextNewLine == -1 && fileContent.Length > firstIndexAfterMatch)
-            {
-                indexOfNextNewLine = Math.Min(fileContent.Length, indexOfNextNewLine + 100);
-            }
-            return indexOfNextNewLine;
-        }
-
-        private static int GetStartIndexOfPreString(Match m, string fileContent)
-        {
-            var indexOfLastNewline = fileContent.LastIndexOfAny(new [] { '\n', '\r' }, m.Index, Math.Min(m.Index, 100));
-
-            int indexOfPreString;
-            if (indexOfLastNewline != -1)
-            {
-                indexOfPreString = ++indexOfLastNewline;
-            }
-            else if (indexOfLastNewline == -1 && m.Index > 0)
-            {
-                indexOfPreString = Math.Max(0, indexOfLastNewline - 100);
-            }
-            else
-            {
-                indexOfPreString = -1;
-            }
-            return indexOfPreString;
-        }
-
-        private static void PrintMatchResult(string filePath, int matchCount)
-        {
-            if (matchCount == 1)
-            {
-                Console.WriteLine(@"{0}: found 1 match", filePath);
-            }
-            else
-            {
-                Console.WriteLine(@"{0}: found {1} matches", filePath, matchCount);
-            }
-        }
-
-        private static void PrintReplacementResult(string filePath, int replacementCount)
-        {
-            if (replacementCount == 1)
-            {
-                Console.WriteLine(@"{0}: did 1 replacement", filePath);
-            }
-            else
-            {
-                Console.WriteLine(@"{0}: did {1:n0} replacements", filePath, replacementCount);
-            }
-        }
-        #endregion
+        var root = CliDefinition.Create(Run);
+        return root.Parse(args).Invoke();
     }
+
+    private static int Run(CliOptions options)
+    {
+        try
+        {
+            if (options.ShowVersion)
+            {
+                PrintVersionInformation();
+                return 0;
+            }
+
+            if (options.Pattern == null)
+                throw new ArgumentException("Missing regular expression pattern");
+
+            var filelist = new List<string>();
+
+            foreach (var itm in options.Paths)
+            {
+                if (itm.EndsWith(Path.DirectorySeparatorChar) || itm.EndsWith(Path.AltDirectorySeparatorChar))
+                {
+                    // directory
+                    filelist.AddRange(Directory.GetFiles(
+                        itm,
+                        options.Filter,
+                        options.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly));
+                }
+                else
+                {
+                    filelist.Add(itm);
+                }
+            }
+
+            // Ausführen
+            foreach (var filePath in filelist)
+            {
+                ProcessInputFile(filePath, options);
+            }
+
+            return 0;
+        }
+        catch (Exception e)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine(e.Message);
+            Console.ResetColor();
+            Console.Error.WriteLine($"Type '{CliDefinition.ProgramName} --help' for more information.");
+            return 1;
+        }
+    }
+
+    private static void PrintVersionInformation()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var version = assembly.GetName().Version?.ToString(3);
+        var copyright = assembly.GetCustomAttribute<AssemblyCopyrightAttribute>()?.Copyright ?? "";
+        var company = assembly.GetCustomAttribute<AssemblyCompanyAttribute>()?.Company ?? "";
+
+        Console.ForegroundColor = ConsoleColor.DarkCyan;
+        Console.WriteLine($"{company} {CliDefinition.ProgramName} Version {version}");
+        Console.ResetColor();
+        Console.WriteLine(copyright);
+    }
+
+    #region Hilfsfunktionen
+
+    /// <summary>
+    /// Verarbeitet eine Datei mit den geg. Parametern
+    /// </summary>
+    /// <param name="filePath">Pfad zur Eingabedatei</param>
+    /// <param name="options">Suchpattern, Ersetzungsmuster und Ausgabeoptionen</param>
+    private static void ProcessInputFile(string filePath, CliOptions options)
+    {
+        var pattern = options.Pattern!;
+        var offsetColumnWidth = options.OffsetColumnWidth;
+
+        if (!File.Exists(filePath))
+        {
+            Console.Error.WriteLine(@"File not found error: " + filePath);
+            return;
+        }
+
+        if (options.Verbose)
+        {
+            Console.WriteLine(@"Progressing: " + filePath);
+        }
+
+        var fileContent = File.ReadAllText(filePath);
+
+        if (options.Replace == null)
+        {
+            // search mode
+            var countOfPrintedMatches = 0;
+            foreach (Match m in Regex.Matches(fileContent, pattern, options.RegExOptions))
+            {
+                if (!options.OnlyMatching)
+                    Console.Write(@"Offset:" + m.Index.ToString(CultureInfo.InvariantCulture).PadRight(offsetColumnWidth) + @" ");
+                PrintMatch(fileContent, m, options.OnlyMatching);
+                Console.WriteLine();
+                countOfPrintedMatches++;
+                if (countOfPrintedMatches == options.MaxMatchesCount) break;
+            }
+
+            if (!options.OnlyMatching && (options.Verbose || countOfPrintedMatches > 0))
+            {
+                PrintMatchResult(filePath, countOfPrintedMatches);
+            }
+        }
+        else
+        {
+            // replace mode
+            var matchCount = 0;
+            var replaced = Regex.Replace(fileContent, pattern,
+                match =>
+                {
+                    matchCount++;
+                    var result = match.Result(options.Replace);
+                    if (options.Verbose)
+                    {
+                        Console.WriteLine(@"Offset:" + match.Index.ToString(CultureInfo.InvariantCulture).PadRight(offsetColumnWidth) + @" " + match.Value + @"->" + result);
+                    }
+                    return result;
+                }, options.RegExOptions);
+
+            // Dateien ohne Treffer nicht neu schreiben (Encoding und Zeitstempel bleiben erhalten).
+            if (matchCount > 0)
+            {
+                File.WriteAllText(filePath, replaced);
+            }
+
+            if (options.Verbose || matchCount > 0)
+            {
+                PrintReplacementResult(filePath, matchCount);
+            }
+        }
+    }
+
+    private static void PrintMatch(string fileContent, Match m, bool onlyMatches)
+    {
+        var firstIndexAfterMatch = m.Index + m.Length;
+
+        // PreString nach stdout schreiben
+        if (!onlyMatches)
+        {
+            var indexOfPreString = LineContext.GetStartIndex(fileContent, m.Index);
+            Console.Write(fileContent.AsSpan(indexOfPreString, m.Index - indexOfPreString));
+        }
+
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Write(m.Value);
+        Console.ResetColor();
+
+        // PostString nach stdout schreiben, sofern es einen gibt.
+        if (onlyMatches) return;
+        var indexOfNextNewLine = LineContext.GetEndIndex(fileContent, firstIndexAfterMatch);
+        Console.Write(fileContent.AsSpan(firstIndexAfterMatch, indexOfNextNewLine - firstIndexAfterMatch));
+    }
+
+    private static void PrintMatchResult(string filePath, int matchCount)
+    {
+        if (matchCount == 1)
+        {
+            Console.WriteLine(@"{0}: found 1 match", filePath);
+        }
+        else
+        {
+            Console.WriteLine(@"{0}: found {1} matches", filePath, matchCount);
+        }
+    }
+
+    private static void PrintReplacementResult(string filePath, int replacementCount)
+    {
+        if (replacementCount == 1)
+        {
+            Console.WriteLine(@"{0}: did 1 replacement", filePath);
+        }
+        else
+        {
+            Console.WriteLine(@"{0}: did {1:n0} replacements", filePath, replacementCount);
+        }
+    }
+    #endregion
 }
