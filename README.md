@@ -76,8 +76,16 @@ regex --case-sensitive Hello notes.txt
 
 Replace with a named group (rewrites the file, files without matches stay untouched)
 ```
-regex "Name:(?<name>[A-Za-z]+)" --replace "id=${name}" names.txt
+regex "Name:(?<name>[A-Za-z]+)" --replace 'id=${name}' names.txt
 ```
+
+## Example Videos
+
+[Recursive .txt search (GIF)](examples/videos/recursive-search.gif) · [MP4](examples/videos/recursive-search.mp4)
+
+[Case-sensitive search (GIF)](examples/videos/case-sensitive.gif) · [MP4](examples/videos/case-sensitive.mp4)
+
+[Named-group replacement (GIF)](examples/videos/named-replacement.gif) · [MP4](examples/videos/named-replacement.mp4)
 
 ## Changelog
 

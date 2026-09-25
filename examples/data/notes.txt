@@ -1,0 +1,3 @@
+Hello from .NET regex.
+hello is lowercase and will not match this search.
+Another Hello appears here.

@@ -1,0 +1,2 @@
+Hello from a nested folder.
+hello is lowercase and will match by default.
