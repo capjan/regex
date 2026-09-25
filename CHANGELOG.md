@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- `--max-count` and `--offset-width` with a non-numeric value now report `Option '--max-count' requires a whole number, but got 'abc'.` instead of naming the internal type `System.Nullable`1[System.Int32]`.
+
 ## 2.0.0
 
 ### Breaking
