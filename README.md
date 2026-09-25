@@ -1,4 +1,5 @@
 [![.NET](https://github.com/capjan/regex/actions/workflows/dotnet.yml/badge.svg)](https://github.com/capjan/regex/actions/workflows/dotnet.yml)
+[![Coverage](https://raw.githubusercontent.com/capjan/regex/badges/coverage.svg)](https://github.com/capjan/regex/actions/workflows/dotnet.yml)
 
 # regex
 
@@ -66,31 +67,190 @@ Exit code is `0` on success and `1` on errors (e.g. missing pattern, invalid reg
 
 ## Usage Examples
 
-Find "Hello" in all *.txt files in this folder and all subfolders
+Every example is self-contained: the files it starts from, the command, and the exact output. Click to expand.
+
+<details>
+<summary><b>Search a directory tree</b> for a word in <code>*.txt</code> files</summary>
+
+<br>
+
+Starting point:
+
 ```
-C:>regex --recursive --filter *.txt Hello ./
+docs/
+├── intro.txt        "Hello World" / "hello again" / "Goodbye"
+└── sub/
+    ├── more.txt     "Say Hello to everyone" / "nothing here"
+    └── skip.md      "no match"
 ```
 
-Search case-sensitive
+Command (`--recursive` walks subfolders, `--filter` limits the files, a directory must end with `/`):
+
 ```
-regex --case-sensitive Hello notes.txt
+$ regex --recursive --filter '*.txt' Hello docs/
+Offset:0      Hello World
+Offset:12     hello again
+docs/intro.txt: found 2 matches
+Offset:4      Say Hello to everyone
+docs/sub/more.txt: found 1 match
 ```
 
-Replace with a named group (rewrites the file, files without matches stay untouched)
+Matching is case-insensitive by default, so `hello again` is found too. The offset is the character position of the match in the file. `skip.md` is ignored by the filter.
+
+</details>
+
+<details>
+<summary><b>Case-sensitive search</b> with <code>--case-sensitive</code></summary>
+
+<br>
+
+`notes.txt`:
+
 ```
-regex "Name:(?<name>[A-Za-z]+)" --replace "Hello ${name}, how are you?" names.txt
+Hello there
+hello there
 ```
 
-Preview a replacement first: `--dry-run` only counts, `--diff` prints a unified diff. Neither writes a file
+Default (case-insensitive) versus `--case-sensitive`:
+
 ```
-regex "Name:(?<name>[A-Za-z]+)" --replace 'id=${name}' --diff names.txt
+$ regex Hello notes.txt
+Offset:0      Hello there
+Offset:12     hello there
+notes.txt: found 2 matches
+
+$ regex --case-sensitive Hello notes.txt
+Offset:0      Hello there
+notes.txt: found 1 match
 ```
 
-The diff goes to stdout without colors when redirected, so it can be applied later with `patch -p0` or `git apply -p0` (use relative paths, `git apply` rejects absolute ones)
+</details>
+
+<details>
+<summary><b>Print only the match</b> with <code>--only-matching</code> and <code>--max-count</code></summary>
+
+<br>
+
+`names.txt`:
+
 ```
-regex "Name:(?<name>[A-Za-z]+)" --replace 'id=${name}' --diff names.txt > names.patch
-patch -p0 < names.patch
+Name:Alice
+Name:Bob
+Age:42
 ```
+
+Print just the matched text instead of the whole line:
+
+```
+$ regex --only-matching 'Name:\w+' names.txt
+Name:Alice
+Name:Bob
+```
+
+Stop after the first match:
+
+```
+$ regex --max-count 1 --only-matching 'Name:\w+' names.txt
+Name:Alice
+```
+
+</details>
+
+<details>
+<summary><b>Replace with a named group</b> (rewrites the file)</summary>
+
+<br>
+
+`names.txt` before:
+
+```
+Name:Alice
+Name:Bob
+Age:42
+```
+
+Command. Use single quotes in bash/zsh so the shell does not expand `${name}`:
+
+```
+$ regex 'Name:(?<name>[A-Za-z]+)' --replace 'Hello ${name}, how are you?' names.txt
+names.txt: did 2 replacements
+```
+
+`names.txt` after:
+
+```
+Hello Alice, how are you?
+Hello Bob, how are you?
+Age:42
+```
+
+Files without matches are left untouched.
+
+</details>
+
+<details>
+<summary><b>Preview a replacement</b> with <code>--dry-run</code> (counts only)</summary>
+
+<br>
+
+`--dry-run` reports what would change and writes nothing. It also works across a whole tree.
+
+`docs/intro.txt` contains 2 matches for `hello`, `docs/sub/more.txt` contains 1:
+
+```
+$ regex --recursive --filter '*.txt' --dry-run hello --replace bye docs/
+docs/intro.txt: would do 2 replacements
+docs/sub/more.txt: would do 1 replacement
+```
+
+Both files are unchanged afterwards.
+
+</details>
+
+<details>
+<summary><b>Preview as unified diff</b> with <code>--diff</code>, then apply it with <code>patch</code></summary>
+
+<br>
+
+`names.txt`:
+
+```
+Name:Alice
+Name:Bob
+Age:42
+```
+
+`--diff` prints the changes as a unified diff and writes nothing:
+
+```
+$ regex 'Name:(?<name>[A-Za-z]+)' --replace 'id=${name}' --diff names.txt
+--- names.txt
++++ names.txt
+@@ -1,3 +1,3 @@
+-Name:Alice
+-Name:Bob
++id=Alice
++id=Bob
+ Age:42
+```
+
+The diff goes to stdout without colors when redirected, so you can save it, review it and apply it later with `patch -p0` or `git apply -p0` (use relative paths, `git apply` rejects absolute ones):
+
+```
+$ regex 'Name:(?<name>[A-Za-z]+)' --replace 'id=${name}' --diff names.txt > names.patch
+$ patch -p0 < names.patch
+patching file names.txt
+```
+
+`names.txt` after `patch`:
+
+```
+id=Alice
+id=Bob
+Age:42
+```
+
+</details>
 
 ## Changelog
 
