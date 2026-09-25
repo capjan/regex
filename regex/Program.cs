@@ -95,9 +95,12 @@ static class Program
             return;
         }
 
+        // Bei --diff bleibt stdout dem Patch vorbehalten, Zusatzinformationen gehen nach stderr.
+        var info = options.Diff ? Console.Error : Console.Out;
+
         if (options.Verbose)
         {
-            Console.WriteLine(@"Progressing: " + filePath);
+            info.WriteLine(@"Progressing: " + filePath);
         }
 
         var fileContent = File.ReadAllText(filePath);
@@ -132,7 +135,7 @@ static class Program
                     var result = match.Result(options.Replace);
                     if (options.Verbose)
                     {
-                        Console.WriteLine(@"Offset:" + match.Index.ToString(CultureInfo.InvariantCulture).PadRight(offsetColumnWidth) + @" " + match.Value + @"->" + result);
+                        info.WriteLine(@"Offset:" + match.Index.ToString(CultureInfo.InvariantCulture).PadRight(offsetColumnWidth) + @" " + match.Value + @"->" + result);
                     }
                     return result;
                 }, options.RegExOptions);
@@ -204,6 +207,9 @@ static class Program
 
     private static void PrintDiff(string diff)
     {
+        // Treffer, die den Text nicht verändern (z. B. foo -> foo), ergeben keinen Diff.
+        if (diff.Length == 0) return;
+
         // Farben nur im Terminal, damit umgeleitete Ausgabe ein gültiger Patch bleibt.
         var useColor = !Console.IsOutputRedirected;
         foreach (var line in diff[..^1].Split('\n'))
