@@ -2,20 +2,21 @@ name: NuGet Publish
 
 on:
   workflow_dispatch:
-    branches: [ main ]
 
 jobs:
   nuget_push:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 5.0.x
-    - name: Build and Test
-      run: dotnet build -c Release
+        dotnet-version: 10.0.x
+    - name: Test
+      run: dotnet test -c Release
+    - name: Pack
+      run: dotnet pack regex/regex.csproj -c Release -o artifacts
     - name: NuGet publishing
-      run: dotnet nuget push $GITHUB_WORKSPACE\regex\bin\Release\*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
