@@ -30,7 +30,7 @@ internal static class CliDefinition
         };
         var diff = new Option<bool>("--diff", "-d")
         {
-            Description = "with --replace: print the changes as unified diff, but do not write any file"
+            Description = "with --replace: print the changes as unified diff instead of the summary, but do not write any file (implies --dry-run)"
         };
         var caseSensitive = new Option<bool>("--case-sensitive", "-c")
         {

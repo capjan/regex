@@ -211,6 +211,47 @@ public sealed class EndToEndTests : IDisposable
         Assert.Contains(" b\r\n", stdout);
     }
 
+    [Fact]
+    public void Replace_DryRunAndDiff_PrintOnlyTheDiffAndDoNotWrite()
+    {
+        var file = WriteFile("a.txt", "foo\n");
+
+        var (exitCode, stdout, _) = Run("-n", "-d", "-R", "bar", "foo", file);
+
+        Assert.Equal(0, exitCode);
+        Assert.StartsWith("--- ", stdout);
+        Assert.DoesNotContain("would do", stdout);
+        Assert.Equal("foo\n", File.ReadAllText(file));
+    }
+
+    [Fact]
+    public void Replace_Diff_MultipleFiles_PrintsOneDiffPerFile()
+    {
+        var first = WriteFile("a.txt", "foo\n");
+        var second = WriteFile("b.txt", "foo\n");
+
+        var (exitCode, stdout, _) = Run("--diff", "-R", "bar", "foo", first, second);
+
+        Assert.Equal(0, exitCode);
+        var text = stdout.ReplaceLineEndings("\n");
+        Assert.Equal(
+            $"--- {first}\n+++ {first}\n@@ -1,1 +1,1 @@\n-foo\n+bar\n" +
+            $"--- {second}\n+++ {second}\n@@ -1,1 +1,1 @@\n-foo\n+bar\n",
+            text);
+    }
+
+    [Fact]
+    public void Replace_Diff_FileWithoutTrailingNewline_IsAnnotated()
+    {
+        var file = WriteFile("a.txt", "foo");
+
+        var (exitCode, stdout, _) = Run("--diff", "-R", "bar", "foo", file);
+
+        Assert.Equal(0, exitCode);
+        Assert.EndsWith("-foo\n\\ No newline at end of file\n+bar\n\\ No newline at end of file\n",
+            stdout.ReplaceLineEndings("\n"));
+    }
+
     [Theory]
     [InlineData("--dry-run")]
     [InlineData("--diff")]
