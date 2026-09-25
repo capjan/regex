@@ -24,6 +24,14 @@ internal static class CliDefinition
         };
 
         var replace = new Option<string?>("--replace", "-R") { Description = "replacement Pattern (regex)" };
+        var dryRun = new Option<bool>("--dry-run", "-n")
+        {
+            Description = "with --replace: report what would change, but do not write any file"
+        };
+        var diff = new Option<bool>("--diff", "-d")
+        {
+            Description = "with --replace: print the changes as unified diff, but do not write any file"
+        };
         var caseSensitive = new Option<bool>("--case-sensitive", "-c")
         {
             Description = "enables case-sensitive behavior - btw. disables the by default enabled ignore-case option"
@@ -48,7 +56,8 @@ internal static class CliDefinition
             "Optionally you can set a replace pattern that will be applied on every match.\n\n" +
             "Examples:\n" +
             "  regex \"Name:(?<name>[A-Za-z]+)\" --replace \"id=${name}\" names.txt\n" +
-            "  regex --recursive --filter *.txt Hello ./");
+            "  regex --recursive --filter *.txt Hello ./\n" +
+            "  regex \"Name:(?<name>[A-Za-z]+)\" --replace \"id=${name}\" --diff names.txt");
 
         // Die eingebaute --version Option durch eine eigene mit Kurzform -V ersetzen.
         foreach (var builtIn in root.Options.Where(o => o.Name == "--version").ToList())
@@ -57,7 +66,7 @@ internal static class CliDefinition
         root.Arguments.Add(pattern);
         root.Arguments.Add(paths);
         foreach (var option in new Option[]
-                 { replace, caseSensitive, filter, recursive, offsetWidth, onlyMatching, maxCount, verbose, version })
+                 { replace, dryRun, diff, caseSensitive, filter, recursive, offsetWidth, onlyMatching, maxCount, verbose, version })
             root.Options.Add(option);
 
         root.SetAction(parseResult => run(new CliOptions
@@ -65,6 +74,8 @@ internal static class CliDefinition
             Pattern = parseResult.GetValue(pattern),
             Paths = parseResult.GetValue(paths) ?? [],
             Replace = parseResult.GetValue(replace),
+            DryRun = parseResult.GetValue(dryRun),
+            Diff = parseResult.GetValue(diff),
             CaseSensitive = parseResult.GetValue(caseSensitive),
             Filter = parseResult.GetValue(filter) ?? "*.*",
             Recursive = parseResult.GetValue(recursive),

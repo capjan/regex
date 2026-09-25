@@ -35,6 +35,23 @@ public class CliDefinitionTests
         Assert.False(options.CaseSensitive);
         Assert.Equal(RegexOptions.IgnoreCase, options.RegExOptions);
         Assert.Null(options.Replace);
+        Assert.False(options.DryRun);
+        Assert.False(options.Diff);
+    }
+
+    [Theory]
+    [InlineData("--dry-run", true, false)]
+    [InlineData("-n", true, false)]
+    [InlineData("--diff", false, true)]
+    [InlineData("-d", false, true)]
+    public void DryRunAndDiffFlags_AreParsed(string flag, bool dryRun, bool diff)
+    {
+        var (options, exitCode) = Parse(flag, "-R", "x", "hello", "a.txt");
+
+        Assert.Equal(0, exitCode);
+        Assert.NotNull(options);
+        Assert.Equal(dryRun, options.DryRun);
+        Assert.Equal(diff, options.Diff);
     }
 
     [Theory]

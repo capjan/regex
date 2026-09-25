@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `-n` / `--dry-run` for `--replace`: reports the replacements that would be made without writing any file.
+- `-d` / `--diff` for `--replace`: prints the changes as unified diff (usable with `patch`) without writing any file.
+- Both options fail with exit code `1` when `--replace` is missing.
+
 ## 2.0.1 - 2026-09-25
 
 ### Fixed

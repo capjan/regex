@@ -136,6 +136,57 @@ public sealed class EndToEndTests : IDisposable
     }
 
     [Fact]
+    public void Replace_DryRun_ReportsButDoesNotWrite()
+    {
+        var file = WriteFile("names.txt", "Name:Bob and Name:Ann\n");
+
+        var (exitCode, stdout, _) = Run("--dry-run", "-R", "id=${name}", "Name:(?<name>[A-Za-z]+)", file);
+
+        Assert.Equal(0, exitCode);
+        Assert.Contains("would do 2 replacements", stdout);
+        Assert.DoesNotContain("did 2", stdout);
+        Assert.Equal("Name:Bob and Name:Ann\n", File.ReadAllText(file));
+    }
+
+    [Fact]
+    public void Replace_Diff_PrintsUnifiedDiffAndDoesNotWrite()
+    {
+        var file = WriteFile("names.txt", "first\nName:Bob\nlast\n");
+
+        var (exitCode, stdout, _) = Run("--diff", "-R", "id=${name}", "Name:(?<name>[A-Za-z]+)", file);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal(
+            $"--- {file}\n+++ {file}\n@@ -1,3 +1,3 @@\n first\n-Name:Bob\n+id=Bob\n last\n",
+            stdout.ReplaceLineEndings("\n"));
+        Assert.Equal("first\nName:Bob\nlast\n", File.ReadAllText(file));
+    }
+
+    [Fact]
+    public void Replace_Diff_WithoutMatches_PrintsNothing()
+    {
+        var file = WriteFile("a.txt", "nothing here\n");
+
+        var (exitCode, stdout, _) = Run("--diff", "-R", "x", "absent", file);
+
+        Assert.Equal(0, exitCode);
+        Assert.Equal(string.Empty, stdout);
+    }
+
+    [Theory]
+    [InlineData("--dry-run")]
+    [InlineData("--diff")]
+    public void DryRunOrDiff_WithoutReplace_FailsWithExitCodeOne(string flag)
+    {
+        var file = WriteFile("a.txt", "x\n");
+
+        var (exitCode, _, stderr) = Run(flag, "x", file);
+
+        Assert.Equal(1, exitCode);
+        Assert.Contains("require --replace", stderr);
+    }
+
+    [Fact]
     public void MissingFile_IsReportedOnStderr()
     {
         var (_, stdout, stderr) = Run("hello", Path.Combine(_dir, "missing.txt"));
