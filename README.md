@@ -1,4 +1,5 @@
 [![.NET](https://github.com/capjan/regex/actions/workflows/dotnet.yml/badge.svg)](https://github.com/capjan/regex/actions/workflows/dotnet.yml)
+[![Coverage](https://raw.githubusercontent.com/capjan/regex/badges/coverage.svg)](https://github.com/capjan/regex/actions/workflows/dotnet.yml)
 
 # regex
 
