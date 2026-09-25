@@ -6,17 +6,26 @@ on:
 jobs:
   nuget_push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # enable GitHub OIDC token issuance for NuGet trusted publishing
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: 10.0.x
     - name: Test
       run: dotnet test -c Release
     - name: Pack
       run: dotnet pack regex/regex.csproj -c Release -o artifacts
+    # Short-lived API key (valid for 1 hour) via OIDC, no long-lived secret required.
+    - name: NuGet login (OIDC)
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
     - name: NuGet publishing
-      run: dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+      run: dotnet nuget push "artifacts/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --skip-duplicate
