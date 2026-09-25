@@ -4,6 +4,8 @@
 
 Search and replace with **.NET regular expressions** from the command line, using the same engine as your C# code.
 
+<img src="assets/hero-regex.png" alt="grep, sed and PCRE each speak a different regex dialect; regex runs the .NET flavor on the command line and the same pattern works unchanged in C#">
+
 ## Why not grep or ripgrep?
 
 Use them for general text search, they are faster and more widely installed. Use `regex` when you need the .NET flavor:
