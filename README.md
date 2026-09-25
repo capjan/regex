@@ -50,7 +50,7 @@ Arguments:
 Options:
   -R, --replace <replace>        replacement Pattern (regex)
   -n, --dry-run                  with --replace: report what would change, but do not write any file
-  -d, --diff                     with --replace: print the changes as unified diff, but do not write any file
+  -d, --diff                     with --replace: print the changes as unified diff instead of the summary, but do not write any file (implies --dry-run)
   -c, --case-sensitive           enables case-sensitive behavior - btw. disables the by default enabled ignore-case option
   -f, --filter <filter>          wildcard based file filter, e.g. *.txt [default: *.*]
   -r, --recursive                progress all subdirectories
@@ -86,7 +86,7 @@ Preview a replacement first: `--dry-run` only counts, `--diff` prints a unified 
 regex "Name:(?<name>[A-Za-z]+)" --replace 'id=${name}' --diff names.txt
 ```
 
-The diff goes to stdout without colors when redirected, so it can be applied later with `patch`
+The diff goes to stdout without colors when redirected, so it can be applied later with `patch -p0` or `git apply -p0` (use relative paths, `git apply` rejects absolute ones)
 ```
 regex "Name:(?<name>[A-Za-z]+)" --replace 'id=${name}' --diff names.txt > names.patch
 patch -p0 < names.patch
