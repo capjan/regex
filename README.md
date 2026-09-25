@@ -76,7 +76,7 @@ regex --case-sensitive Hello notes.txt
 
 Replace with a named group (rewrites the file, files without matches stay untouched)
 ```
-regex "Name:(?<name>[A-Za-z]+)" --replace "id=${name}" names.txt
+regex "Name:(?<name>[A-Za-z]+)" --replace "Hello ${name}, how are you?" names.txt
 ```
 
 ## Changelog
